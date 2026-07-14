@@ -1,0 +1,56 @@
+name: Rust CI
+on:
+  workflow_call:
+  workflow_dispatch:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+        with:
+          toolchain: nightly
+          components: clippy, rustfmt
+      - uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-sort
+      - uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-machete
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: clippy
+        run: cargo clippy --all --all-targets --all-features
+      - name: rustfmt
+        run: cargo fmt --all -- --check
+      - name: cargo-sort
+        run: cargo sort --check --no-format -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+      - name: cargo-machete
+        run: cargo machete
+  test-versions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: ["1.88.0", stable, beta]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Run tests (all features)
+        run: cargo test --all --all-features --all-targets
+  prek:
+    name: Validate prek
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1.1.1
+  cargo-deny:
+    name: cargo-deny check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
+        with:
+          manifest-path: Cargo.toml
