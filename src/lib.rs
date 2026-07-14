@@ -32,7 +32,7 @@ impl PackageMetadata {
         let serialized = serde_json::to_vec(&self)?;
         writeln!(&mut bw, "SECTIONS")?;
         writeln!(&mut bw, "{{")?;
-        writeln!(&mut bw, "    .note.package (READONLY) : ALIGN(4)")?;
+        writeln!(&mut bw, "    .note.package : ALIGN(4)")?;
         writeln!(&mut bw, "    {{")?;
         writeln!(&mut bw, "        KEEP(*(.note.package))")?;
         writeln!(&mut bw, "        LONG(0x0004)")?; // length of owner
