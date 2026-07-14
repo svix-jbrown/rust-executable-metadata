@@ -25,6 +25,8 @@ pub struct PackageMetadata {
     pub os_version: Option<String>,
 }
 
+const OWNER: [u8; 4] = [0x46, 0x44, 0x4f, 0x00];
+
 impl PackageMetadata {
     #[cfg(target_os = "linux")]
     fn write_linker_script<W: Write>(self, target: W) -> std::io::Result<()> {
@@ -36,10 +38,10 @@ impl PackageMetadata {
         writeln!(&mut bw, "    .note.package : ALIGN(4)")?;
         writeln!(&mut bw, "    {{")?;
         writeln!(&mut bw, "        KEEP(*(.note.package))")?;
-        writeln!(&mut bw, "        LONG(0x0004)")?; // length of owner
-        writeln!(&mut bw, "        LONG({:#04x})", serialized.len())?; // length of owner
+        writeln!(&mut bw, "        LONG({:#04x})", OWNER.len())?;
+        writeln!(&mut bw, "        LONG({:#04x})", serialized.len())?;
         writeln!(&mut bw, "        LONG(0xcafe1a7e)")?; // magic number from spec
-        write_bytes(&mut bw, &[0x46, 0x44, 0x4f, 0x00])?;
+        write_bytes(&mut bw, &OWNER)?;
         write_bytes(&mut bw, &serialized)?;
         writeln!(&mut bw, "    }}")?;
         writeln!(&mut bw, "}}")?;
