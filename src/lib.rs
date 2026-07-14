@@ -32,6 +32,7 @@ impl PackageMetadata {
         let serialized = serde_json::to_vec(&self)?;
         writeln!(&mut bw, "SECTIONS")?;
         writeln!(&mut bw, "{{")?;
+        // TODO: we should set (READONLY) here, but it only works on GNU LD, not on LLD
         writeln!(&mut bw, "    .note.package : ALIGN(4)")?;
         writeln!(&mut bw, "    {{")?;
         writeln!(&mut bw, "        KEEP(*(.note.package))")?;
