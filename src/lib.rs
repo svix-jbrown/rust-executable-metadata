@@ -25,13 +25,16 @@ pub struct PackageMetadata {
     pub os_version: Option<String>,
 }
 
-const OWNER: [u8; 4] = [0x46, 0x44, 0x4f, 0x00];
+const OWNER: &[u8; 4] = b"FDO\x00";
 
 impl PackageMetadata {
     #[allow(unused)]
     fn write_linker_script<W: Write>(self, target: W) -> std::io::Result<()> {
         let mut bw = BufWriter::new(target);
         let mut serialized = serde_json::to_vec(&self)?;
+        // the JSON must be terminated with a NUL
+        serialized.push(0x00);
+        // the JSON must be padded to a multiple of 4 bytes
         while serialized.len() % 4 != 0 {
             serialized.push(0x00);
         }
@@ -44,7 +47,7 @@ impl PackageMetadata {
         writeln!(&mut bw, "        LONG({:#04x})", OWNER.len())?;
         writeln!(&mut bw, "        LONG({:#04x})", serialized.len())?;
         writeln!(&mut bw, "        LONG(0xcafe1a7e)")?; // magic number from spec
-        write_bytes(&mut bw, &OWNER)?;
+        write_bytes(&mut bw, OWNER)?;
         write_bytes(&mut bw, &serialized)?;
         writeln!(&mut bw, "    }}")?;
         writeln!(&mut bw, "}}")?;
